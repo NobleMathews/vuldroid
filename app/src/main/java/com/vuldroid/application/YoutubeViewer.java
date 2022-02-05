@@ -4,12 +4,22 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class YoutubeViewer extends AppCompatActivity {
 
@@ -41,18 +51,46 @@ public class YoutubeViewer extends AppCompatActivity {
             vulnerable.loadUrl(lods);
         }
     }
-    public class WebViewClientImpl extends WebViewClient {
+//    public class WebViewClientImpl extends WebViewClient {
+//
+//        private Activity activity = null;
+//
+//        public WebViewClientImpl(Activity activity) {
+//            this.activity = activity;
+//        }
+//
+//        @Override
+//        public boolean shouldOverrideUrlLoading(WebView webView, String url) {
+//            return false;
+//
+//        }
+//
+//    }
+    class WebViewClientImpl extends WebViewClient {
 
         private Activity activity = null;
-
         public WebViewClientImpl(Activity activity) {
             this.activity = activity;
         }
 
         @Override
-        public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-            return false;
-
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            Uri uri = request.getUrl();
+            if (uri.getPath().startsWith("/local_cache/")) {
+                File cacheFile = new File(activity.getCacheDir(), uri.getLastPathSegment());
+                if (cacheFile.exists()) {
+                    InputStream inputStream;
+                    try {
+                        inputStream = new FileInputStream(cacheFile);
+                    } catch (IOException e) {
+                        return null;
+                    }
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Access-Control-Allow-Origin", "*");
+                    return new WebResourceResponse("text/html", "utf-8", 200, "OK", headers, inputStream);
+                }
+            }
+            return super.shouldInterceptRequest(view, request);
         }
 
     }
