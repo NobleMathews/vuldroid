@@ -10,9 +10,13 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.JavascriptInterface;
+
+import java.util.Locale;
 
 public class BlogsViewer extends AppCompatActivity {
     String gettoken;
+    private final JSInterface jsInterface = new JSInterface();
 
 
     @Override
@@ -24,6 +28,7 @@ public class BlogsViewer extends AppCompatActivity {
              WebView vulnerable =(WebView) findViewById(R.id.loads);
             WebSettings webSettings = vulnerable.getSettings();
             webSettings.setJavaScriptEnabled(true);
+            vulnerable.addJavascriptInterface(jsInterface, "LIGHT_SENSOR_2");
             webSettings.setAllowFileAccessFromFileURLs(true);
             vulnerable.setWebChromeClient(new WebChromeClient());
             WebViewClientImpl webViewClient = new WebViewClientImpl(this);
@@ -42,20 +47,40 @@ public class BlogsViewer extends AppCompatActivity {
             vulnerable.setWebViewClient(webViewClient);
             vulnerable.loadUrl(gettoken);}
 
-    }}
-    class WebViewClientImpl extends WebViewClient {
+    }
 
-        private Activity activity = null;
+    private static class JSInterface {
+        float lux = 0.0f;
 
-        public WebViewClientImpl(Activity activity) {
-            this.activity = activity;
+        private void updateLux(float lux) {
+            this.lux = lux;
         }
 
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-            return false;
-
+        @JavascriptInterface
+        public String getLux() {
+            return (String.format(Locale.US, "{\"lux\": %f}", lux));
         }
+
+        @JavascriptInterface
+        public Boolean getLuxer() {
+            return true;
+        }
+    }
+}
+
+class WebViewClientImpl extends WebViewClient {
+
+    private Activity activity = null;
+
+    public WebViewClientImpl(Activity activity) {
+        this.activity = activity;
+    }
+
+    @Override
+    public boolean shouldOverrideUrlLoading(WebView webView, String url) {
+        return false;
 
     }
+
+}
 

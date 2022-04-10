@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -19,9 +20,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class YoutubeViewer extends AppCompatActivity {
+    private final JSInterface jsInterface = new JSInterface();
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -39,6 +42,7 @@ public class YoutubeViewer extends AppCompatActivity {
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         vulnerable.setWebChromeClient(new WebChromeClient());
+        vulnerable.addJavascriptInterface(jsInterface, "LIGHT_SENSOR_1");
         WebViewClientImpl webViewClient = new WebViewClientImpl(this);
         vulnerable.setWebViewClient(webViewClient);
 //        if ((getIntent() != null) || getIntent().hasExtra("intent_url")) {
@@ -93,5 +97,22 @@ public class YoutubeViewer extends AppCompatActivity {
             return super.shouldInterceptRequest(view, request);
         }
 
+    }
+    private static class JSInterface {
+        float lux = 0.0f;
+
+        private void updateLux(float lux) {
+            this.lux = lux;
+        }
+
+        @JavascriptInterface
+        public String getLux() {
+            return (String.format(Locale.US, "{\"lux\": %f}", lux));
+        }
+
+        @JavascriptInterface
+        public Boolean getLuxer() {
+            return true;
+        }
     }
     }
